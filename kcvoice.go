@@ -1,4 +1,4 @@
-// kcvoice包为舰队Collection游戏语音实现了一个简单的爬虫。
+// kcvoice包为舰队Collection游戏实现了一个简单的爬虫。
 package kcvoice
 
 import (
@@ -6,62 +6,64 @@ import (
 	"fmt"
 	"regexp"
 	"io/ioutil"
-	"errors"
 )
 
 // 硬编码数据来源，请勿改动
 const (
-	MoegirlUrl    = "https://zh.moegirl.org/File:%s%s.mp3"
-	MoegirlRegFmt = `<div class="fullMedia"><a href="([^"]+)"`
+	MoegirlNameUrl     = `https://zh.moegirl.org/%E8%88%B0%E9%98%9FCollection/%E5%9B%BE%E9%89%B4/%E8%88%B0%E5%A8%98`
+	MoegirlNameRegFmt  = `>No.[0-9][0-9][0-9] ([^"]+)</a>`
+	MoegirlVoiceUrl    = `https://zh.moegirl.org/舰队Collection:%s`
+	MoegirlVoiceRegFmt = `data-filesrc="([^"]+)"`
 )
 
 // 数据来源是一个接收格式化数据(舰娘名字和语音编号)以及正则表达式的结构体
 type Source struct {
-	url    string
-	regfmt string
+	nameUrl     string
+	voiceUrl    string
+	nameRegfmt  string
+	voiceRegfmt string
 }
 
 // 自定义数据源
-func NewSource(url string, regfmt string) (this Source) {
-	this.url = url
-	this.regfmt = regfmt
-	return
+func NewSource(nameUrl string, voiceUrl string, nameRegfmt string, voiceRegfmt string) *Source {
+	return &Source{
+		nameUrl:     nameUrl,
+		voiceUrl:    voiceUrl,
+		nameRegfmt:  nameRegfmt,
+		voiceRegfmt: voiceRegfmt,
+	}
 }
 
 // 萌娘百科数据源获取
-func NewMoegirlSource() (this Source) {
-	this.url = MoegirlUrl
-	this.regfmt = MoegirlRegFmt
-	return
+func NewMoegirlSource() *Source {
+	return &Source{
+		nameUrl:     MoegirlNameUrl,
+		voiceUrl:    MoegirlVoiceUrl,
+		nameRegfmt:  MoegirlNameRegFmt,
+		voiceRegfmt: MoegirlVoiceRegFmt,
+	}
 }
 
 // 默认数据源获取
-func NewDefaultSource() (this Source) {
-	this = NewMoegirlSource()
-	return
+func NewDefaultSource() *Source {
+	return NewMoegirlSource()
 }
 
-// 根据舰娘名字和语音编号来获取链接
-func (a Source) GetUrl(name string, id int) (result string, err error) {
+// 获取所有舰娘名字
+func (s Source) GetNames() (list []string, err error) {
 	client := &http.Client{}
-
-	sid := fmt.Sprintf("%d", id)
-	if id < 10 {
-		sid = fmt.Sprintf("0%d", id)
-	}
-	url := fmt.Sprintf(a.url, name, sid)
-
-	reqest, err := http.NewRequest("GET", url, nil)
+	url := s.nameUrl
+	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return
 	}
 
-	response, err := client.Do(reqest)
+	response, err := client.Do(request)
 	if err != nil {
 		return
 	}
 
-	reg, err := regexp.Compile(a.regfmt)
+	reg, err := regexp.Compile(s.nameRegfmt)
 	if err != nil {
 		return
 	}
@@ -71,28 +73,40 @@ func (a Source) GetUrl(name string, id int) (result string, err error) {
 		return
 	}
 
-	res := reg.FindStringSubmatch(string(str))
-	if len(res) == 0 {
-		errinfo := fmt.Sprintf("Page Not Found(%s %s)", name, sid)
-		err = errors.New(errinfo)
-		return
+	res := reg.FindAllStringSubmatch(string(str), -1)
+	for _, v := range res {
+		list = append(list, v[1])
 	}
-
-	result = res[1]
 	return
 }
 
-// 根据舰娘名字获取所有链接,参数limite用以设置失败重试次数
-func (a Source) GetUrls(name string, limit int) (urls []string) {
-	var wrongAnswer int
-	for i := 1; wrongAnswer <= limit; i++ {
-		str, err := a.GetUrl(name, i)
-		if err != nil {
-			fmt.Println(err)
-			wrongAnswer++
-			continue
-		}
-		urls = append(urls, str)
+// 根据舰娘名字来获取链接列表
+func (s Source) GetUrls(name string) (list []string, err error) {
+	client := &http.Client{}
+	url := fmt.Sprintf(s.voiceUrl, name)
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return
+	}
+
+	response, err := client.Do(request)
+	if err != nil {
+		return
+	}
+
+	reg, err := regexp.Compile(s.voiceRegfmt)
+	if err != nil {
+		return
+	}
+
+	str, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return
+	}
+
+	res := reg.FindAllStringSubmatch(string(str), -1)
+	for _, v := range res {
+		list = append(list, v[1])
 	}
 	return
 }
