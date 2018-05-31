@@ -13,7 +13,7 @@ const (
 	MoegirlNameUrl     = `https://zh.moegirl.org/%E8%88%B0%E9%98%9FCollection/%E5%9B%BE%E9%89%B4/%E8%88%B0%E5%A8%98`
 	MoegirlNameRegFmt  = `>No.[0-9][0-9][0-9] ([^"]+)</a>`
 	MoegirlVoiceUrl    = `https://zh.moegirl.org/舰队Collection:%s`
-	MoegirlVoiceRegFmt = `data-filesrc="([^"]+)"`
+	MoegirlVoiceRegFmt = `data-filesrc="(https://img.moegirl.org/common/[^"]+)"`
 )
 
 // 数据来源是一个接收格式化数据(舰娘名字和语音编号)以及正则表达式的结构体
