@@ -10,9 +10,9 @@ import (
 
 // 硬编码数据来源，请勿改动
 const (
-	MoegirlNameUrl     = `https://zh.moegirl.org/%E8%88%B0%E9%98%9FCollection/%E5%9B%BE%E9%89%B4/%E8%88%B0%E5%A8%98`
+	MoegirlNameUrl     = `https://zh.moegirl.org/舰队Collection/图鉴/舰娘`
 	MoegirlNameRegFmt  = `>No.[0-9][0-9][0-9] ([^"]+)</a>`
-	MoegirlVoiceUrl    = `https://zh.moegirl.org/舰队Collection:%s`
+	MoegirlVoiceUrl    = `https://zh.moegirl.org/舰队Collection:`
 	MoegirlVoiceRegFmt = `data-filesrc="(https://img.moegirl.org/common/[^"]+)"`
 )
 
@@ -83,8 +83,7 @@ func (s Source) GetNames() (list []string, err error) {
 // 根据舰娘名字来获取链接列表
 func (s Source) GetUrls(name string) (list []string, err error) {
 	client := &http.Client{}
-	url := fmt.Sprintf(s.voiceUrl, name)
-	request, err := http.NewRequest("GET", url, nil)
+	request, err := http.NewRequest("GET", s.voiceUrl + name, nil)
 	if err != nil {
 		return
 	}
