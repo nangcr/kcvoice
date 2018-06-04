@@ -3,7 +3,6 @@ package kcvoice
 
 import (
 	"net/http"
-	"fmt"
 	"regexp"
 	"io/ioutil"
 )
@@ -52,8 +51,7 @@ func NewDefaultSource() *Source {
 // 获取所有舰娘名字
 func (s Source) GetNames() (list []string, err error) {
 	client := &http.Client{}
-	url := s.nameUrl
-	request, err := http.NewRequest("GET", url, nil)
+	request, err := http.NewRequest("GET", s.nameUrl, nil)
 	if err != nil {
 		return
 	}
@@ -83,7 +81,7 @@ func (s Source) GetNames() (list []string, err error) {
 // 根据舰娘名字来获取链接列表
 func (s Source) GetUrls(name string) (list []string, err error) {
 	client := &http.Client{}
-	request, err := http.NewRequest("GET", s.voiceUrl + name, nil)
+	request, err := http.NewRequest("GET", s.voiceUrl+name, nil)
 	if err != nil {
 		return
 	}
